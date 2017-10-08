@@ -13,7 +13,8 @@
   "dependencies": {
     "vue": "^2.4.2",
     "chalk": "^2.1.0",
-    "semver": "^5.4.1"
+    "semver": "^5.4.1",
+    "vue-cli": "^2.9.1"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",
