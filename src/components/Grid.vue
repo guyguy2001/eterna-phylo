@@ -1,9 +1,12 @@
-﻿<template>
-  <svg @mousedown.right="spawnNuc" @contextmenu.prevent :width="gridWidth" height="200">
+<template>
+  <svg @mousedown.right="spawnNuc" @contextmenu.prevent :width="gridWidth + gridStartX" height="200">
     <drag-line v-show="selectedRow" :y="selectedRowY + 5" />
     <g v-for="(subA, i) in nucs" :key="i">
-      <rect v-for="j in arraySize" :x="(j-1)*size + 4" :y="(i)*size + 4" width="27" height="27" rx="5" ry="5" style="fill:#AAAAAA; pointer-events:none;"/>
-      <nuc v-for="(nuc, j) in subA" @changetype="changeType(i, j, $event)"@mousedown="dragChildStart(i,j, $event)" :type="nuc.type" :x="nuc.x" :y="i * 40" :RY="false" :key="j" />
+      <rect v-for="j in arraySize" :x="gridStartX + (j-1)*size + 4" :y="(i)*size + 4" width="27" height="27" rx="5" ry="5" style="fill:#AAAAAA; pointer-events:none;"/>
+      <nuc v-for="(nuc, j) in subA" @changetype="changeType(i, j, $event)"@mousedown="dragChildStart(i,j, $event)" :type="nuc.type" :x="gridStartX + nuc.x" :y="i * 40" :RY="false" :key="j" />
+      <foreignObject x="10" :y="i*size + 7" width="100" :height="size">
+        <input @input="changedText(i, $event)" v-model="textRows[i]" style="width:100px"/>
+      </foreignObject>
     </g>
   </svg>
 </template>
@@ -21,27 +24,27 @@
         selectedRow: null,
         selectedRowY: 0,
         selectedColumn: -1,
+        textRows : [['9'],[],[],[],[]],
       }
     },
-    props: ['grid-width'],
+    props: ['grid-width', 'grid-start-x'],
     components: {
       nuc,
       dragLine
     },
     methods: {
       dragChildStart(i, j, e) {
-        this.currentX = e.clientX;
+        this.currentX = (e.clientX - this.gridStartX);
         this.selectedRow = this.nucs[i];
         this.selectedColumn = j;
         this.selectedRowY = i * this.size;
-        console.log(this.selectedRow[this.selectedColumn].posIndex);
 
       },
       dragChildOngoing(e) {
         if (this.selectedColumn == -1)
           return;
         let index = this.selectedColumn;
-        let dx = e.clientX - this.currentX;
+        let dx = (e.clientX - this.gridStartX) - this.currentX;
         let newX = this.selectedRow[this.selectedColumn].x + dx;
         this.currentX += dx;
         this.changePos(this.selectedColumn, newX);
@@ -49,7 +52,7 @@
       changePos(index, x) {
         if (index === 0 && x < 0)
           return this.selectedRow[index].x = 0;
-        if (index === this.selectedRow.length - 1 && x + this.sizeNS > this.arraySize * this.size)//////////////////  
+        if (index === this.selectedRow.length - 1 && x + this.sizeNS > this.gridWidthExact)//////////////////  
           return this.selectedRow[index].x = this.arraySize * this.size - this.sizeNS;
         if (this.selectedRow.length > index + 1) {
           if (x + this.size > this.selectedRow[index + 1].x)
@@ -65,13 +68,16 @@
         if (this.selectedColumn === -1) return;
         for (let index = this.selectedColumn; index < this.selectedRow.length && this.snap(this.selectedRow[index]); index++);
         for (let index = this.selectedColumn - 1; index >= 0 && this.snap(this.selectedRow[index]); index--);
+        this.score();
+        let newText = '';
+        for (let i = 0; i < this.selectedRow.length; i++)
+          newText += this.selectedRow[i].type;
+        this.textRows[this.nucs.indexOf(this.selectedRow)] = newText;
         this.selectedColumn = -1;
         this.selectedRow = null;
-        this.score();
       },
       snap(nuc) {
-        if (nuc.x % this.size == 0) {
-          nuc.posIndex = nuc.x / this.size;
+        if (nuc.posIndex == nuc.x * this.size) {
           return false;
         }
         else {
@@ -89,6 +95,7 @@
         };
         if (this.nucs.length <= 1)
           return data;
+        console.log(this.nucs[0]);
         let prev = this.toArray(this.nucs[0]);
         for (let i = 1; i < this.nucs.length; i++) {
           let curr = this.toArray(this.nucs[i]);
@@ -135,7 +142,13 @@
             firstB = i;
             break;
           }
-        for (let i = 0; i < Math.min(a.length, b.length); i++)
+        for (let i = a.length - 1; i >= 0 && a[i] == 'X'; i++)
+          a.pop();
+        for (let i = b.length - 1; i >= 0 && b[i] == 'X'; i++)
+          b.pop();
+        for (let i = 0; i < Math.min(a.length, b.length); i++) {
+          console.log(i + " " + a[i] + " " + b[i]);
+
           if (a[i] === 'X')
             if (b[i] === 'X')
               continue;
@@ -157,6 +170,7 @@
               data.mismatch++;
             else
               data.match++;
+        }
         return data;
       },
       toArray(arr) {
@@ -179,7 +193,8 @@
 
         let e = evt.target;
         let dim = e.getBoundingClientRect();
-        let x = evt.clientX - dim.left;
+        let x = evt.clientX - this.gridStartX - dim.left;
+        if (x < 0) return;
         let y = evt.clientY - dim.top;
         let i = Math.floor(y / this.size);
         let j = Math.floor(x / this.size);
@@ -187,19 +202,31 @@
         for (; k < this.nucs[i].length && j > this.nucs[i][k].posIndex; k++);
         if (k < this.nucs[i].length && this.nucs[i][k].posIndex == j)
           return;
-        console.log(this.nucs[i]);
         k = Math.max(k, 0);
         this.nucs[i].splice(k, 0, { x: j * this.size, type: 'A', posIndex: j });
+        this.score();
+      },
+      changedText(index, e) {
+        console.log(e);
+        this.nucs[index] = [];
+
+        let text = this.textRows[index] = this.textRows[index].toUpperCase();
+        for (let i = 0; i < text.length; i++)
+          this.nucs[index].push({ type: text.charAt(i), x: (i + 5) * 40, posIndex: i + 5 });
         this.score();
       }
     },
     computed: {
       arraySize() {
-        return Math.floor(this.gridWidth / this.size);
+        return Math.floor((this.gridWidth - this.sizeNS) / this.size) + 1;
+        //this.sizeNS
+      },
+      gridWidthExact() {
+        return this.size * this.arraySize + this.sizeNS - this.size;
       }
     },
     mounted() {
-      let ms2 = 'ACAUGAGGAUCACCCAUGU';
+      let ms2 = this.textRows[0] = 'ACAUGAGGAUCACCCAUGU';
       for (let i = 0; i < ms2.length; i++)
         this.nucs[0].push({ type: ms2.charAt(i), x: (i+5) * 40, posIndex: i+5 });
       window.addEventListener('mousemove', this.dragChildOngoing);

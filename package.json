@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "vue": "^2.4.2"
-   },
+  },
   "devDependencies": {
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",
@@ -58,8 +58,8 @@
     "webpack-merge": "^4.1.0"
   },
   "engines": {
-    "node": "8.5.0",
-    "npm": "5.1.x"
+    "node": "^8.5.0",
+    "npm": "^5.1.0"
   },
   "browserslist": [
     "> 1%",
