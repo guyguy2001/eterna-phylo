@@ -187,6 +187,10 @@
           this.nucs[i].splice(j, 1);
         else
           this.$set(this.nucs[i][j], 'type', newType);
+        let newText = '';
+        for (let index = 0; index < this.nucs[i].length; index++)
+          newText += this.nucs[i][index].type;
+        this.textRows[i] = newText;
         this.score();
       },
       spawnNuc(evt) {
@@ -204,6 +208,10 @@
           return;
         k = Math.max(k, 0);
         this.nucs[i].splice(k, 0, { x: j * this.size, type: 'A', posIndex: j });
+        let newText = '';
+        for (let index = 0; index < this.nucs[i].length; index++)
+          newText += this.nucs[i][index].type;
+        this.textRows[i] = newText;
         this.score();
       },
       changedText(index, e) {

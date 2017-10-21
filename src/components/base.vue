@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <rect @mousedown.left="mouseDown" @mousedown.right.stop="changeColor" :class="'nuc-' + computedType" width="35" height="35" rx="5" ry="5" style="stroke-width:1;stroke:rgb(0,0,0)" />
 </template>
 
@@ -53,9 +53,9 @@
     fill: rgb(255,255,0);
   }
 
-  .nuc-A:hover {
+  /*.nuc-A:hover {
     fill: rgb(200,200,0);
-  }
+  }*/
 
   .nuc-U {
     fill: #1689cc;
