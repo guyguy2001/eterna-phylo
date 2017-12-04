@@ -1,11 +1,14 @@
 <template>
-  <svg @mousedown.right="spawnNuc" @contextmenu.prevent :width="gridWidth + gridStartX" height="200">
+  <svg @mousedown.right="spawnNuc" @contextmenu.prevent :width="gridWidth + gridStartX" height="500">
     <drag-line v-show="selectedRow" :y="selectedRowY + 5" />
     <g v-for="(subA, i) in nucs" :key="i">
       <rect v-for="j in arraySize" :x="gridStartX + (j-1)*size + 4" :y="(i)*size + 4" width="27" height="27" rx="5" ry="5" style="fill:#AAAAAA; pointer-events:none;"/>
       <nuc v-for="(nuc, j) in subA" @changetype="changeType(i, j, $event)"@mousedown="dragChildStart(i,j, $event)" :type="nuc.type" :x="gridStartX + nuc.x" :y="i * 40" :RY="false" :key="j" />
-      <foreignObject x="10" :y="i*size + 7" width="100" :height="size">
-        <input @input="changedText(i, $event)" v-model="textRows[i]" style="width:100px"/>
+      <foreignObject x="10" :y="i*size + 7" width="90" :height="size">
+        <input @input="changedText(i, $event)" v-model="textRows[i]" style="width:90px"/>
+      </foreignObject>
+      <foreignObject x="110" :y="i*size + 7" width="10" :height="size">
+        <input style="width:10px" />
       </foreignObject>
     </g>
   </svg>
@@ -17,14 +20,14 @@
   export default {
     data() {
       return {
-        nucs: [[], [], [], [], []],
+        nucs: [[], [], [], [], [], [], [], [], []],
         currentX: 0,
         size: 35 + 5,
         sizeNS: 35,
         selectedRow: null,
         selectedRowY: 0,
         selectedColumn: -1,
-        textRows : [['9'],[],[],[],[]],
+        textRows: new Array(9),
       }
     },
     props: ['grid-width', 'grid-start-x'],
