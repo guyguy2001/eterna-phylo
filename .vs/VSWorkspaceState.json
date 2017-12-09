@@ -4,8 +4,9 @@
     "\\build",
     "\\config",
     "\\src",
-    "\\src\\components"
+    "\\src\\components",
+    "\\src\\store"
   ],
-  "SelectedNode": "\\src\\App.vue",
+  "SelectedNode": "\\src\\components\\Grid.vue",
   "PreviewInSolutionExplorer": false
 }

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <svg @mousedown.right="spawnNuc" @contextmenu.prevent :width="gridWidth + gridStartX" height="500">
     <drag-line v-show="selectedRow" :y="selectedRowY + 5" />
     <g v-for="(subA, i) in nucs" :key="i">
@@ -7,7 +7,7 @@
       <foreignObject x="10" :y="i*size + 7" width="90" :height="size">
         <input @input="changedText(i, $event)" v-model="textRows[i]" style="width:90px"/>
       </foreignObject>
-      <foreignObject x="110" :y="i*size + 7" width="10" :height="size">
+      <foreignObject x="110" :y="i*size + 7" width="10"  v-model="names[i]" @change="updateNames(i)"  :height="size">
         <input style="width:10px" />
       </foreignObject>
     </g>
@@ -22,18 +22,19 @@
       return {
         nucs: [[], [], [], [], [], [], [], [], []],
         currentX: 0,
-        size: 35 + 5,
-        sizeNS: 35,
+        size: 35 + 5, //the size of a nuc with spacing
+        sizeNS: 35, //the size of a nuc without spacing
         selectedRow: null,
         selectedRowY: 0,
         selectedColumn: -1,
         textRows: new Array(9),
+        names: new Array(9)
       }
     },
     props: ['grid-width', 'grid-start-x'],
     components: {
       nuc,
-      dragLine
+      dragLine,
     },
     methods: {
       dragChildStart(i, j, e) {
@@ -225,6 +226,9 @@
         for (let i = 0; i < text.length; i++)
           this.nucs[index].push({ type: text.charAt(i), x: (i + 5) * 40, posIndex: i + 5 });
         this.score();
+      },
+      updateNames(i) {
+        this.$store.state.lanes[i].name = this.names[i];
       }
     },
     computed: {

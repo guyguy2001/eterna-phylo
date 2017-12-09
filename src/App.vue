@@ -1,8 +1,10 @@
-<template>
+﻿<template>
   <div>
     <div>
       <grid :grid-width="width-120" :grid-start-x="120" @update="updateScoreData"></grid>
     </div>
+    <connection-panel></connection-panel>
+
     <score-panel :current="scoreData"></score-panel>
   </div>
 </template>
@@ -10,11 +12,14 @@
 <script>
   import grid from './components/Grid'
   import scorePanel from './components/ScorePanel'
+  import connectionPanel from './components/ConnectionPanel'
+
   export default {
     name: 'app',
     components: {
       grid,
-      scorePanel
+      scorePanel,
+      connectionPanel
     },
     data() {
       return {
