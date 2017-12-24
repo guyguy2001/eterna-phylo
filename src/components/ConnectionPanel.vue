@@ -1,12 +1,12 @@
 ﻿<template>
   <div>
-    <table style="border: 1px solid black;">
+    <table>
       <tr v-for="(lane, i) in lanes">
         <td>
           {{lane.name}}
         </td>
         <td>
-
+          <input v-model="lane.eternaPos" />
         </td>
       </tr>
     </table>
@@ -26,6 +26,8 @@
   }
 </script>
 
-<style>
-
+<style scoped>
+  table, tr, td {
+    border: 1px solid black;
+  }
 </style>

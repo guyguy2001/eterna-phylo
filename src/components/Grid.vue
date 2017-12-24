@@ -5,10 +5,10 @@
       <rect v-for="j in arraySize" :x="gridStartX + (j-1)*size + 4" :y="(i)*size + 4" width="27" height="27" rx="5" ry="5" style="fill:#AAAAAA; pointer-events:none;"/>
       <nuc v-for="(nuc, j) in subA" @changetype="changeType(i, j, $event)"@mousedown="dragChildStart(i,j, $event)" :type="nuc.type" :x="gridStartX + nuc.x" :y="i * 40" :RY="false" :key="j" />
       <foreignObject x="10" :y="i*size + 7" width="90" :height="size">
-        <input @input="changedText(i, $event)" v-model="textRows[i]" style="width:90px"/>
+        <input @change="uploadToEterna(i)" @input="changedText(i, $event)" v-model="textRows[i]" style="width:90px"/>
       </foreignObject>
-      <foreignObject x="110" :y="i*size + 7" width="10"  v-model="names[i]" @change="updateNames(i)"  :height="size">
-        <input style="width:10px" />
+      <foreignObject x="110" :y="i*size + 7" width="10" :height="size">
+        <input style="width:10px" v-model="names[i]" @input="updateNames(i)"/>
       </foreignObject>
     </g>
   </svg>
@@ -16,6 +16,7 @@
 <script>
   import nuc from './base'
   import dragLine from './dragLine'
+  import { message_broadcast, message_receive } from '../modules/connection'
 
   export default {
     data() {
@@ -226,9 +227,13 @@
         for (let i = 0; i < text.length; i++)
           this.nucs[index].push({ type: text.charAt(i), x: (i + 5) * 40, posIndex: i + 5 });
         this.score();
+        this.$store.state.lanes[index].sequence = text;
       },
       updateNames(i) {
         this.$store.state.lanes[i].name = this.names[i];
+      },
+      uploadToEterna(index) {
+        message_broadcast({ 'command': 'update-lane', 'id': 0, 'position': this.$store.state.lanes[index].eternaPos, 'sequence': this.$store.state.lanes[index].sequence, 'uid': (new Date).getTime() + Math.random() });
       }
     },
     computed: {

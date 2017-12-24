@@ -4,9 +4,11 @@
     "\\build",
     "\\config",
     "\\src",
+    "\\src\\assets",
     "\\src\\components",
+    "\\src\\modules",
     "\\src\\store"
   ],
-  "SelectedNode": "\\src\\components\\Grid.vue",
+  "SelectedNode": "\\src\\modules\\connection.js",
   "PreviewInSolutionExplorer": false
 }

@@ -5,6 +5,6 @@ Vue.use(Vuex);
 
 export const store = new Vuex.Store({
     state: {
-        lanes: [{ name: 'A' }]
+        lanes: [{ name: 'A', eternaPos: 1 }, { name: 'A', eternaPos: 1 }, { name: 'A', eternaPos: 1 }]
     }
 });
