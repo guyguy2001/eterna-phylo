@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <h1>Score: {{score}} <!--&nbsp; Best: {{bestScore}}--></h1>
     <br />

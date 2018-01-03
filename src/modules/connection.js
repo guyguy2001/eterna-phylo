@@ -1,8 +1,9 @@
-﻿
-export function message_broadcast(message) {
-    new Worker('../connectionsWorker.js').postMessage();
+﻿export function message_broadcast(vue, message) {
+    console.log(window);
+    vue.$worker.run((opener) => opener.postMessage(message, 'http://www.eternagame.org'), [JSON.parse(JSON.stringify(window.opener))])
+        .then((test) => console.log('SUCCCCCCCCCCCCCCCCCCCCCCEEEEEEEEEEEEEEEEESSSSSSSSSSSSS'))
+        .catch(console.error);
 }
-
 
 // receive message
 // 
