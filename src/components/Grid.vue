@@ -1,14 +1,14 @@
-﻿<template>
+<template>
   <svg @mousedown.right="spawnNuc" @contextmenu.prevent :width="gridWidth + gridStartX" height="500">
     <drag-line v-show="selectedRow" :y="selectedRowY + 5" />
-    <g v-for="(subA, i) in nucs" :key="i">
+    <g v-for="(lane, i) in $store.state.lanes" :key="i">
       <rect v-for="j in arraySize" :x="gridStartX + (j-1)*size + 4" :y="(i)*size + 4" width="27" height="27" rx="5" ry="5" style="fill:#AAAAAA; pointer-events:none;"/>
-      <nuc v-for="(nuc, j) in subA" @changetype="changeType(i, j, $event)"@mousedown="dragChildStart(i,j, $event)" :type="nuc.type" :x="gridStartX + nuc.x" :y="i * 40" :RY="false" :key="j" />
+      <nuc v-for="(nuc, j) in lane.nucs" @changetype="changeType(i, j, $event)"@mousedown="dragChildStart(i,j, $event)" :type="nuc.type" :x="gridStartX + nuc.x" :y="i * 40" :RY="false" :key="j" />
       <foreignObject x="10" :y="i*size + 7" width="90" :height="size">
-        <input @change="uploadToEterna(i)" @input="changedText(i, $event)" v-model="textRows[i]" style="width:90px"/>
+        <input @input="changedText(i, $event)" v-model="textRows[i]" style="width:90px"/>
       </foreignObject>
       <foreignObject x="110" :y="i*size + 7" width="10" :height="size">
-        <input style="width:10px" v-model="names[i]" @input="updateNames(i)"/>
+        <input style="width:10px" v-model="$store.state.lanes[i].name" @input="updateNames(i)"/>
       </foreignObject>
     </g>
   </svg>
@@ -21,13 +21,13 @@
   export default {
     data() {
       return {
-        nucs: [[], [], [], [], [], [], [], [], []],
         currentX: 0,
         size: 35 + 5, //the size of a nuc with spacing
         sizeNS: 35, //the size of a nuc without spacing
         selectedRow: null,
         selectedRowY: 0,
         selectedColumn: -1,
+        selecterRowIndex: -1,
         textRows: new Array(9),
         names: new Array(9)
       }
@@ -38,9 +38,13 @@
       dragLine,
     },
     methods: {
+      nucs(i) {
+        return this.$store.state.lanes[i].nucs;
+      },
       dragChildStart(i, j, e) {
         this.currentX = (e.clientX - this.gridStartX);
-        this.selectedRow = this.nucs[i];
+        this.selectedRow = this.nucs(i);
+        this.selecterRowIndex = i;
         this.selectedColumn = j;
         this.selectedRowY = i * this.size;
 
@@ -73,11 +77,12 @@
         if (this.selectedColumn === -1) return;
         for (let index = this.selectedColumn; index < this.selectedRow.length && this.snap(this.selectedRow[index]); index++);
         for (let index = this.selectedColumn - 1; index >= 0 && this.snap(this.selectedRow[index]); index--);
+        this.uploadToEterna(selectedRowIndex);
         this.score();
         let newText = '';
         for (let i = 0; i < this.selectedRow.length; i++)
           newText += this.selectedRow[i].type;
-        this.textRows[this.nucs.indexOf(this.selectedRow)] = newText;
+        this.textRows[this.selecterRowIndex] = newText;
         this.selectedColumn = -1;
         this.selectedRow = null;
       },
@@ -98,13 +103,13 @@
           open: 0,
           extend: 0
         };
-        if (this.nucs.length <= 1)
+        if (this.$store.state.lanes.length <= 1)
           return data;
-        console.log(this.nucs[0]);
-        let prev = this.toArray(this.nucs[0]);
-        for (let i = 1; i < this.nucs.length; i++) {
-          let curr = this.toArray(this.nucs[i]);
-          let pairData = this.scorePair(prev, curr);
+        console.log(this.nucs(0));
+        let prev = this.toArray(this.nucs(0));
+        for (let i = 1; i < this.$store.state.lanes.length; i++) {
+          let curr = this.toArray(this.nucs(i));
+          this.scorePair(prev, curr);
           data.match += pairData.match;
           data.mismatch += pairData.mismatch;
           data.open += pairData.open;
@@ -189,13 +194,14 @@
       },
       changeType(i, j, newType) {
         if (newType === 'X')
-          this.nucs[i].splice(j, 1);
+          this.nucs(i).splice(j, 1);
         else
-          this.$set(this.nucs[i][j], 'type', newType);
+          this.$set(this.nucs(i)[j], 'type', newType);
         let newText = '';
-        for (let index = 0; index < this.nucs[i].length; index++)
-          newText += this.nucs[i][index].type;
+        for (let index = 0; index < this.nucs(i).length; index++)
+          newText += this.nucs(i)[index].type;
         this.textRows[i] = newText;
+        this.uploadToEterna(i);
         this.score();
       },
       spawnNuc(evt) {
@@ -208,32 +214,33 @@
         let i = Math.floor(y / this.size);
         let j = Math.floor(x / this.size);
         let k = 0;
-        for (; k < this.nucs[i].length && j > this.nucs[i][k].posIndex; k++);
-        if (k < this.nucs[i].length && this.nucs[i][k].posIndex == j)
+        for (; k < this.nucs(i).length && j > this.nucs(i)[k].posIndex; k++);
+        if (k < this.nucs(i).length && this.nucs(i)[k].posIndex == j)
           return;
         k = Math.max(k, 0);
-        this.nucs[i].splice(k, 0, { x: j * this.size, type: 'A', posIndex: j });
+        this.nucs(i).splice(k, 0, { x: j * this.size, type: 'A', posIndex: j });
         let newText = '';
-        for (let index = 0; index < this.nucs[i].length; index++)
-          newText += this.nucs[i][index].type;
+        for (let index = 0; index < this.nucs(i).length; index++)
+          newText += this.nucs(i)[index].type;
         this.textRows[i] = newText;
+        this.uploadToEterna(i);
         this.score();
       },
       changedText(index, e) {
         console.log(e);
-        this.nucs[index] = [];
-
+        this.$store.state.lanes[index].nucs = [];
         let text = this.textRows[index] = this.textRows[index].toUpperCase();
         for (let i = 0; i < text.length; i++)
-          this.nucs[index].push({ type: text.charAt(i), x: (i + 5) * 40, posIndex: i + 5 });
-        this.score();
+          this.nucs(index).push({ type: text.charAt(i), x: (i + 5) * 40, posIndex: i + 5 });
         this.$store.state.lanes[index].sequence = text;
+        this.uploadToEterna(index);
+        this.score();
       },
       updateNames(i) {
         this.$store.state.lanes[i].name = this.names[i];
       },
       uploadToEterna(index) {
-        message_broadcast({ 'command': 'update-lane', 'id': 0, 'position': this.$store.state.lanes[index].eternaPos, 'sequence': this.$store.state.lanes[index].sequence, 'uid': (new Date).getTime() + Math.random() });
+        message_broadcast({ 'command': 'update-lane', 'id': index, 'position': this.$store.state.lanes[index].eternaPos, 'sequence': this.$store.state.lanes[index].sequence, 'uid': (new Date).getTime() + Math.random() });
       }
     },
     computed: {
@@ -248,7 +255,7 @@
     mounted() {
       let ms2 = this.textRows[0] = 'ACAUGAGGAUCACCCAUGU';
       for (let i = 0; i < ms2.length; i++)
-        this.nucs[0].push({ type: ms2.charAt(i), x: (i+5) * 40, posIndex: i+5 });
+        this.nucs(0).push({ type: ms2.charAt(i), x: (i+5) * 40, posIndex: i+5 });
       window.addEventListener('mousemove', this.dragChildOngoing);
       window.addEventListener('mouseup', this.dragChildEnd);
     }

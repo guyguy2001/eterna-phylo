@@ -1,9 +1,13 @@
-﻿<template>
+<template>
   <div>
     <table>
+      <tr>
+        <th>Name</th>
+        <th>Position</th>
+      </tr>
       <tr v-for="(lane, i) in lanes">
         <td>
-          {{lane.name}}
+          <b>{{lane.name}}</b>
         </td>
         <td>
           <input v-model="lane.eternaPos" />
@@ -27,7 +31,7 @@
 </script>
 
 <style scoped>
-  table, tr, td {
+  table, tr, td, th{
     border: 1px solid black;
   }
 </style>
