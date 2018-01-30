@@ -27,7 +27,7 @@
         selectedRow: null,
         selectedRowY: 0,
         selectedColumn: -1,
-        selecterRowIndex: -1,
+        selectedRowIndex: -1,
         textRows: new Array(9),
         names: new Array(9)
       }
@@ -44,7 +44,7 @@
       dragChildStart(i, j, e) {
         this.currentX = (e.clientX - this.gridStartX);
         this.selectedRow = this.nucs(i);
-        this.selecterRowIndex = i;
+        this.selectedRowIndex = i;
         this.selectedColumn = j;
         this.selectedRowY = i * this.size;
 
@@ -77,12 +77,12 @@
         if (this.selectedColumn === -1) return;
         for (let index = this.selectedColumn; index < this.selectedRow.length && this.snap(this.selectedRow[index]); index++);
         for (let index = this.selectedColumn - 1; index >= 0 && this.snap(this.selectedRow[index]); index--);
-        this.uploadToEterna(selectedRowIndex);
+        //this.uploadToEterna(this.selectedRowIndex);
         this.score();
         let newText = '';
         for (let i = 0; i < this.selectedRow.length; i++)
           newText += this.selectedRow[i].type;
-        this.textRows[this.selecterRowIndex] = newText;
+        this.textRows[this.selectedRowIndex] = newText;
         this.selectedColumn = -1;
         this.selectedRow = null;
       },
@@ -109,7 +109,7 @@
         let prev = this.toArray(this.nucs(0));
         for (let i = 1; i < this.$store.state.lanes.length; i++) {
           let curr = this.toArray(this.nucs(i));
-          this.scorePair(prev, curr);
+          let pairData = this.scorePair(prev, curr);
           data.match += pairData.match;
           data.mismatch += pairData.mismatch;
           data.open += pairData.open;
@@ -201,7 +201,7 @@
         for (let index = 0; index < this.nucs(i).length; index++)
           newText += this.nucs(i)[index].type;
         this.textRows[i] = newText;
-        this.uploadToEterna(i);
+        this.uploadToEterna(i, newText.length);
         this.score();
       },
       spawnNuc(evt) {
@@ -223,7 +223,7 @@
         for (let index = 0; index < this.nucs(i).length; index++)
           newText += this.nucs(i)[index].type;
         this.textRows[i] = newText;
-        this.uploadToEterna(i);
+        this.uploadToEterna(i, newText.length - 1);
         this.score();
       },
       changedText(index, e) {
@@ -233,14 +233,21 @@
         for (let i = 0; i < text.length; i++)
           this.nucs(index).push({ type: text.charAt(i), x: (i + 5) * 40, posIndex: i + 5 });
         this.$store.state.lanes[index].sequence = text;
-        this.uploadToEterna(index);
+        this.uploadToEterna(index, text.length - 1); // TODO: CHANGE IF THE EVENT IS CHANGED TO ON ENTER!!!!!!!!!!!!!!!!!!
         this.score();
       },
       updateNames(i) {
         this.$store.state.lanes[i].name = this.names[i];
       },
-      uploadToEterna(index) {
-        message_broadcast({ 'command': 'update-lane', 'id': index, 'position': this.$store.state.lanes[index].eternaPos, 'sequence': this.$store.state.lanes[index].sequence, 'uid': (new Date).getTime() + Math.random() });
+      uploadToEterna(index, oldLength) {
+        message_broadcast({
+          'command': 'update-lane',
+          'id': index,
+          'startIndex': this.$store.state.lanes[index].eternaPos,
+          'newSeq': this.$store.state.lanes[index].sequence,
+           oldLength,
+          'uid': (new Date).getTime() + Math.random()
+        });
       }
     },
     computed: {

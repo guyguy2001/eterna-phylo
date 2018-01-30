@@ -1,6 +1,6 @@
-﻿
-export function message_broadcast(message) {
-    new Worker('../connectionsWorker.js').postMessage();
+
+export function message_broadcast(data) {
+  window.opener.postMessage( data ,'http://www.eternagame.org');
 }
 
 
