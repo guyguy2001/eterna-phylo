@@ -9,6 +9,6 @@
     "\\src\\modules",
     "\\src\\store"
   ],
-  "SelectedNode": "\\src\\modules\\connection.js",
+  "SelectedNode": "\\src\\components\\ConnectionPanel.vue",
   "PreviewInSolutionExplorer": false
 }

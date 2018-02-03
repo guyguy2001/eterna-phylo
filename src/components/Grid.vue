@@ -1,26 +1,29 @@
 <template>
-  <svg @mousedown.right="spawnNuc" @contextmenu.prevent :width="gridWidth + gridStartX" height="500">
+  <svg @mousedown.right="spawnNuc" @contextmenu.prevent :width="gridWidth" :height="lanes.length*size + size">
     <drag-line v-show="selectedRow" :y="selectedRowY + 5" />
-    <g v-for="(lane, i) in $store.state.lanes" :key="i">
+    <g v-for="(lane, i) in lanes" :key="i">
       <rect v-for="j in arraySize" :x="gridStartX + (j-1)*size + 4" :y="(i)*size + 4" width="27" height="27" rx="5" ry="5" style="fill:#AAAAAA; pointer-events:none;"/>
-      <nuc v-for="(nuc, j) in lane.nucs" @changetype="changeType(i, j, $event)"@mousedown="dragChildStart(i,j, $event)" :type="nuc.type" :x="gridStartX + nuc.x" :y="i * 40" :RY="false" :key="j" />
+      <nuc v-for="(nuc, j) in nucs(i)" @changetype="changeType(i, j, $event)"@mousedown="dragChildStart(i,j, $event)" :type="nuc.type" :x="gridStartX + nuc.x" :y="i * 40" :RY="false" :key="j" />
       <foreignObject x="10" :y="i*size + 7" width="90" :height="size">
-        <input @input="changedText(i, $event)" v-model="textRows[i]" style="width:90px"/>
+        <input @input="changedText(i, $event)" v-model="lanes[i].shared.sequence" style="width:90px"/>
       </foreignObject>
-      <foreignObject x="110" :y="i*size + 7" width="10" :height="size">
-        <input style="width:10px" v-model="$store.state.lanes[i].name" @input="updateNames(i)"/>
+      <foreignObject x="110" :y="i*size + 7" width="20" :height="size">
+        <input style="width:20px" v-model="lanes[i].shared.name"/>
       </foreignObject>
     </g>
+    <text x="10" :y="lanes.length*size + size/2" font-weight="700" font-size="24" style="cursor:pointer" @click="$store.commit('addLane')">+</text>
   </svg>
 </template>
 <script>
   import nuc from './base'
   import dragLine from './dragLine'
   import { message_broadcast, message_receive } from '../modules/connection'
+  import { update } from '../modules/update'
 
   export default {
     data() {
       return {
+        gridStartX: 135,
         currentX: 0,
         size: 35 + 5, //the size of a nuc with spacing
         sizeNS: 35, //the size of a nuc without spacing
@@ -28,18 +31,17 @@
         selectedRowY: 0,
         selectedColumn: -1,
         selectedRowIndex: -1,
-        textRows: new Array(9),
         names: new Array(9)
       }
     },
-    props: ['grid-width', 'grid-start-x'],
+    props: ['grid-width'],
     components: {
       nuc,
       dragLine,
     },
     methods: {
       nucs(i) {
-        return this.$store.state.lanes[i].nucs;
+        return this.lanes[i].nucs;
       },
       dragChildStart(i, j, e) {
         this.currentX = (e.clientX - this.gridStartX);
@@ -78,11 +80,11 @@
         for (let index = this.selectedColumn; index < this.selectedRow.length && this.snap(this.selectedRow[index]); index++);
         for (let index = this.selectedColumn - 1; index >= 0 && this.snap(this.selectedRow[index]); index--);
         //this.uploadToEterna(this.selectedRowIndex);
-        this.score();
+        update(this.$store.state);
         let newText = '';
         for (let i = 0; i < this.selectedRow.length; i++)
           newText += this.selectedRow[i].type;
-        this.textRows[this.selectedRowIndex] = newText;
+        this.lanes[this.selectedRowIndex].sequence = newText;
         this.selectedColumn = -1;
         this.selectedRow = null;
       },
@@ -95,93 +97,6 @@
           nuc.x = nuc.posIndex * this.size;
           return true;
         }
-      },
-      score() {
-        let data = {
-          match: 0,
-          mismatch: 0,
-          open: 0,
-          extend: 0
-        };
-        if (this.$store.state.lanes.length <= 1)
-          return data;
-        console.log(this.nucs(0));
-        let prev = this.toArray(this.nucs(0));
-        for (let i = 1; i < this.$store.state.lanes.length; i++) {
-          let curr = this.toArray(this.nucs(i));
-          let pairData = this.scorePair(prev, curr);
-          data.match += pairData.match;
-          data.mismatch += pairData.mismatch;
-          data.open += pairData.open;
-          data.extend += pairData.extend;
-          prev = curr;
-        }
-        this.$emit('update', data);
-      },
-      scorePair(a, b) {
-        var score = 0;
-        function toRY(a) {
-          return a === 'G' || a === 'A' || a === 'R' ? 'R' : 'Y';
-        }
-        function tabulate(a) {
-          var weight = {
-            match: 1,
-            mismatch: -1,
-            open: -4,
-            extend: -1
-          };
-          return (a.match * weight.match +
-            a.mismatch * weight.mismatch +
-            a.open * weight.open +
-            a.extend * weight.extend);
-        }
-        let data = {
-          match: 0,
-          mismatch: 0,
-          open: 0,
-          extend: 0
-        };
-        let firstA = -1, firstB = -1;
-        for (let i = 0; i < a.length; i++)
-          if (a[i] !== 'X') {
-            firstA = i;
-            break;
-          }
-        for (let i = 0; i < b.length; i++)
-          if (b[i] !== 'X') {
-            firstB = i;
-            break;
-          }
-        for (let i = a.length - 1; i >= 0 && a[i] == 'X'; i++)
-          a.pop();
-        for (let i = b.length - 1; i >= 0 && b[i] == 'X'; i++)
-          b.pop();
-        for (let i = 0; i < Math.min(a.length, b.length); i++) {
-          console.log(i + " " + a[i] + " " + b[i]);
-
-          if (a[i] === 'X')
-            if (b[i] === 'X')
-              continue;
-            else if (firstA > i)
-              continue;
-            else if (i === 0 || a[i - 1] !== 'X')
-              data.open++;
-            else
-              data.extend++;
-          else
-            if (b[i] === 'X')
-              if (firstB > i)
-                continue;
-              else if (i === 0 || b[i - 1] !== 'X')
-                data.open++;
-              else
-                data.extend++;
-            else if (toRY(a[i]) === toRY(b[i]))
-              data.mismatch++;
-            else
-              data.match++;
-        }
-        return data;
       },
       toArray(arr) {
         let res = [];
@@ -200,9 +115,8 @@
         let newText = '';
         for (let index = 0; index < this.nucs(i).length; index++)
           newText += this.nucs(i)[index].type;
-        this.textRows[i] = newText;
-        this.uploadToEterna(i, newText.length);
-        this.score();
+        this.lanes[i].sequence = newText;
+        update(this.$store.state, i);
       },
       spawnNuc(evt) {
 
@@ -222,30 +136,21 @@
         let newText = '';
         for (let index = 0; index < this.nucs(i).length; index++)
           newText += this.nucs(i)[index].type;
-        this.textRows[i] = newText;
-        this.uploadToEterna(i, newText.length - 1);
-        this.score();
+        this.lanes[i].sequence = newText;
+        this.lanes[i].shared.sequence = newText;
+        update(this.$store.state, i);
       },
       changedText(index, e) {
-        console.log(e);
-        this.$store.state.lanes[index].nucs = [];
-        let text = this.textRows[index] = this.textRows[index].toUpperCase();
-        for (let i = 0; i < text.length; i++)
-          this.nucs(index).push({ type: text.charAt(i), x: (i + 5) * 40, posIndex: i + 5 });
-        this.$store.state.lanes[index].sequence = text;
-        this.uploadToEterna(index, text.length - 1); // TODO: CHANGE IF THE EVENT IS CHANGED TO ON ENTER!!!!!!!!!!!!!!!!!!
-        this.score();
+        this.$store.commit('changedText', {
+          index: index
+        });
       },
-      updateNames(i) {
-        this.$store.state.lanes[i].name = this.names[i];
-      },
-      uploadToEterna(index, oldLength) {
+      uploadToEterna(index) {
         message_broadcast({
           'command': 'update-lane',
           'id': index,
-          'startIndex': this.$store.state.lanes[index].eternaPos,
-          'newSeq': this.$store.state.lanes[index].sequence,
-           oldLength,
+          'startIndex': this.lanes[index].shared.eternaPos - 1, //The booster uses 0 based indexing, but the users use 1 based indexing
+          'newSeq': this.lanes[index].shared.sequence,
           'uid': (new Date).getTime() + Math.random()
         });
       }
@@ -257,10 +162,13 @@
       },
       gridWidthExact() {
         return this.size * this.arraySize + this.sizeNS - this.size;
+      },
+      lanes() {
+        return this.$store.state.lanes;
       }
     },
     mounted() {
-      let ms2 = this.textRows[0] = 'ACAUGAGGAUCACCCAUGU';
+      let ms2 = this.lanes[0].shared.sequence = 'ACAUGAGGAUCACCCAUGU';
       for (let i = 0; i < ms2.length; i++)
         this.nucs(0).push({ type: ms2.charAt(i), x: (i+5) * 40, posIndex: i+5 });
       window.addEventListener('mousemove', this.dragChildOngoing);

@@ -1,7 +1,7 @@
-﻿<template>
+<template>
   <div>
     <div>
-      <grid :grid-width="width-120" :grid-start-x="120" @update="updateScoreData"></grid>
+      <grid :grid-width="width" @update="updateScoreData"></grid>
     </div>
     <connection-panel></connection-panel>
 

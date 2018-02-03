@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <h1>Score: {{score}} <!--&nbsp; Best: {{bestScore}}--></h1>
     <br />
@@ -40,6 +40,12 @@
           a.open * weight.open +
           a.extend * weight.extend);
       }
+    },
+    mounted() {
+      this.$store.subscribe((mutation, state) => {
+        console.log(mutation.type)
+        console.log(mutation.payload)
+      });
     }
   }
 </script>
