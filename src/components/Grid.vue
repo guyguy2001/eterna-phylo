@@ -108,15 +108,12 @@
         return res;
       },
       changeType(i, j, newType) {
-        if (newType === 'X')
-          this.nucs(i).splice(j, 1);
-        else
-          this.$set(this.nucs(i)[j], 'type', newType);
-        let newText = '';
-        for (let index = 0; index < this.nucs(i).length; index++)
-          newText += this.nucs(i)[index].type;
-        this.lanes[i].sequence = newText;
-        update(this.$store.state, i);
+        this.$store.commit('changeType', {
+          lane: this.lanes[i],
+          index: j,
+          newType,
+          laneIndex: i
+        });
       },
       spawnNuc(evt) {
 
@@ -136,8 +133,13 @@
         let newText = '';
         for (let index = 0; index < this.nucs(i).length; index++)
           newText += this.nucs(i)[index].type;
-        this.lanes[i].sequence = newText;
         this.lanes[i].shared.sequence = newText;
+        this.$store.commit('spawnNuc', {
+          lane: this.lanes[i],
+          index: k,
+          posIndex: j
+        });
+
         update(this.$store.state, i);
       },
       changedText(index, e) {

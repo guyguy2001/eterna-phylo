@@ -7,6 +7,7 @@
         <th>Name</th>
         <th>Position</th>
         <th>Link</th>
+        <th>Reversed</th>
       </tr>
       <tr v-for="(lane, i) in lanes">
         <td>
@@ -17,6 +18,9 @@
         </td>
         <td>
           <input type="button" value="Link" :class="{selectedLink : selectedForLink == i}" @click="linkLanes(i)"/>
+        </td>
+        <td>
+          <input type="checkbox" v-model="lane.shared.reversed" />
         </td>
       </tr>
     </table>
@@ -39,7 +43,7 @@
           this.selectedForLink = i;
         }
         else {
-          if (i !== this.selectedForLink) {
+          if (this.$store.state.lanes[i].shared.links.indexOf(this.$store.state.lanes[this.selectedForLink]) === -1) {
             let aLinks = this.$store.state.lanes[i].shared.links;
             let bLinks = this.$store.state.lanes[this.selectedForLink].shared.links;
             let shared = this.$store.state.lanes[i].shared = this.$store.state.lanes[this.selectedForLink].shared;
@@ -50,9 +54,18 @@
             for (let i in bLinks) {
               shared.links.push(bLinks[i]);
             }
+            for (let i in aLinks) {
+              updateASingleLane(shared.sequence, aLinks[i]);
+            }
           }
-
           this.selectedForLink = -1;
+        }
+        function updateASingleLane(text, lane) {
+          lane.nucs = [];
+          for (let i = 0; i < text.length; i++)
+            lane.nucs.push({ type: text.charAt(i), x: (i + 5) * 40, posIndex: i + 5 });
+          console.log(lane.nucs);
+          lane.shared.sequence = text;
         }
       }
     },
