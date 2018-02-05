@@ -2,14 +2,17 @@
   <svg @mousedown.right="spawnNuc" @contextmenu.prevent :width="gridWidth" :height="lanes.length*size + size">
     <drag-line v-show="selectedRow" :y="selectedRowY + 5" />
     <g v-for="(lane, i) in lanes" :key="i">
-      <rect v-for="j in arraySize" :x="gridStartX + (j-1)*size + 4" :y="(i)*size + 4" width="27" height="27" rx="5" ry="5" style="fill:#AAAAAA; pointer-events:none;"/>
-      <nuc v-for="(nuc, j) in nucs(i)" @changetype="changeType(i, j, $event)"@mousedown="dragChildStart(i,j, $event)" :type="nuc.type" :x="gridStartX + nuc.x" :y="i * 40" :RY="false" :key="j" />
       <foreignObject x="10" :y="i*size + 7" width="90" :height="size">
-        <input @input="changedText(i, $event)" v-model="lanes[i].shared.sequence" style="width:90px"/>
+        <input @input="changedText(i, $event)" v-model="lanes[i].shared.sequence" style="width:90px" />
       </foreignObject>
       <foreignObject x="110" :y="i*size + 7" width="20" :height="size">
-        <input style="width:20px" v-model="lanes[i].shared.name"/>
+        <input style="width:20px" v-model="lanes[i].shared.name" />
       </foreignObject>
+      <text :fill="i % 2 == 0 ? 'orange': 'deepskyblue'" font-weight="700" font-size="24" x="140" :y="i*size + 25" width="100" :height="size">
+        {{i % 2 == 0 ? '5\'': '3\''}}
+      </text>
+      <rect v-for="j in arraySize" :x="gridStartX + (j-1)*size + 4" :y="(i)*size + 4" width="27" height="27" rx="5" ry="5" style="fill:#AAAAAA; pointer-events:none;"/>
+      <nuc v-for="(nuc, j) in nucs(i)" @changetype="changeType(i, j, $event)"@mousedown="dragChildStart(i,j, $event)" :type="nuc.type" :x="gridStartX + nuc.x" :y="i * 40" :RY="false" :key="j" />
     </g>
     <text x="10" :y="lanes.length*size + size/2" font-weight="700" font-size="24" style="cursor:pointer" @click="$store.commit('addLane')">+</text>
   </svg>
@@ -23,7 +26,7 @@
   export default {
     data() {
       return {
-        gridStartX: 135,
+        gridStartX: 160,
         currentX: 0,
         size: 35 + 5, //the size of a nuc with spacing
         sizeNS: 35, //the size of a nuc without spacing

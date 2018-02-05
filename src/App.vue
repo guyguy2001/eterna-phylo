@@ -3,9 +3,9 @@
     <div>
       <grid :grid-width="width" @update="updateScoreData"></grid>
     </div>
+    <spawner-panel></spawner-panel>
     <connection-panel></connection-panel>
-
-    <score-panel :current="scoreData"></score-panel>
+    <!--<score-panel :current="scoreData"></score-panel>-->
   </div>
 </template>
 
@@ -13,13 +13,15 @@
   import grid from './components/Grid'
   import scorePanel from './components/ScorePanel'
   import connectionPanel from './components/ConnectionPanel'
+  import spawnerPanel from './components/SpawnerPanel'
 
   export default {
     name: 'app',
     components: {
       grid,
       scorePanel,
-      connectionPanel
+      connectionPanel,
+      spawnerPanel
     },
     data() {
       return {
